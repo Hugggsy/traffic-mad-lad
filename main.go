@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
+	"sync"
 	"time"
 
 	"github.com/veandco/go-sdl2/sdl"
@@ -10,65 +10,56 @@ import (
 )
 
 func main() {
-	if err := becomeMadLad(); err != nil {
-		fmt.Printf("%v", err)
-		os.Exit(2)
-	}
-
+	errChannel := make(chan error)
+	go handleErrors(errChannel)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go becomeMadLad(&wg, errChannel)
+	wg.Wait()
 }
-func becomeMadLad() error {
 
-	if err := sdl.Init(sdl.INIT_EVERYTHING); err != nil {
-		return fmt.Errorf("Failed to init sdl: %v", err)
+func handleErrors(errChannel chan error) {
+	for {
+		err := <-errChannel
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+}
+
+func becomeMadLad(wg *sync.WaitGroup, errChannel chan error) {
+	errChannel <- sdl.Init(sdl.INIT_EVERYTHING)
 	defer sdl.Quit()
 
-	if err := ttf.Init(); err != nil {
-		return fmt.Errorf("Failed to initialise ttf: %v", err)
-	}
+	errChannel <- ttf.Init()
 	defer ttf.Quit()
 
 	window, renderer, err := sdl.CreateWindowAndRenderer(1000, 200, sdl.WINDOW_SHOWN)
-	if err != nil {
-		return fmt.Errorf("Failed to create window: %v", err)
-	}
+	errChannel <- err
 	defer window.Destroy()
 
-	if err := drawTitle(renderer); err != nil {
-		return fmt.Errorf("Failed not draw title %v", err)
-	}
+	drawTitle(renderer, errChannel)
 
-	time.Sleep(5 * time.Second)
-
-	return nil
+	time.Sleep(2 * time.Second)
+	wg.Done()
 }
 
-func drawTitle(r *sdl.Renderer) error {
+func drawTitle(r *sdl.Renderer, errChannel chan error) {
 	r.Clear()
 
-	font, err := ttf.OpenFont("valuoldcaps.ttf", 20)
-	if err != nil {
-		return fmt.Errorf("Failed to load font: %v", err)
-	}
+	font, err := ttf.OpenFont("./resources/font/valuoldcaps.ttf", 20)
+	errChannel <- err
 	defer font.Close()
 
-	titleColor := sdl.Color{R: 255, G: 0, B: 0, A: 255}
+	titleColor := sdl.Color{R: 200, G: 0, B: 200, A: 255}
 	s, err := font.RenderUTF8Solid("Traffic MAD LAD", titleColor)
-	if err != nil {
-		return fmt.Errorf("Failed to render font: %v", err)
-	}
+	errChannel <- err
 	defer s.Free()
 
 	t, err := r.CreateTextureFromSurface(s)
-	if err != nil {
-		return fmt.Errorf("Failed to create texture from surface: %v", err)
-	}
+	errChannel <- err
 	defer t.Destroy()
 
-	if err := r.Copy(t, nil, nil); err != nil {
-		return fmt.Errorf("Failed to copy texture")
-	}
-
+	errChannel <- r.Copy(t, nil, nil)
 	r.Present()
-	return nil
 }
