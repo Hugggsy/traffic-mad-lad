@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Hugggsy/traffic-mad-lad/painter"
 	"github.com/veandco/go-sdl2/sdl"
 	"github.com/veandco/go-sdl2/ttf"
 )
@@ -29,20 +30,24 @@ func handleErrors(errChannel chan error) {
 
 func becomeMadLad(wg *sync.WaitGroup, errChannel chan error) {
 	errChannel <- sdl.Init(sdl.INIT_EVERYTHING)
-	defer sdl.Quit()
+	//defer sdl.Quit()
 
 	errChannel <- ttf.Init()
-	defer ttf.Quit()
+	//defer ttf.Quit()
 
-	window, renderer, err := sdl.CreateWindowAndRenderer(1000, 500, sdl.WINDOW_SHOWN)
+	_, renderer, err := sdl.CreateWindowAndRenderer(600, 1000, sdl.WINDOW_SHOWN)
 	errChannel <- err
-	defer window.Destroy()
+	//defer window.Destroy()
 
-	drawTitle(renderer, errChannel)
+	scene := painter.NewScene(renderer, errChannel)
+	scene.DrawTitle(errChannel)
+	time.Sleep(1 * time.Second)
 
-	time.Sleep(2 * time.Second)
+	go func() {
+		for {
+			scene.Paint(errChannel)
+			time.Sleep(10 * time.Millisecond)
+		}
+	}()
 
-	drawRoad(renderer, errChannel)
-	time.Sleep(2 * time.Second)
-	wg.Done()
 }
