@@ -19,6 +19,16 @@ type Scene struct {
 	motorbike *sdl.Texture
 }
 
+type Vehicle struct {
+	texture         *sdl.Texture
+	speedMultiplier int32
+}
+
+func newVehicle(filepath string, speedMultiplier int32, r *sdl.Renderer, errChannel chan error) Vehicle {
+	texture, err := img.LoadTexture(r, "resources/img/yellowcar.png")
+	errChannel <- err
+}
+
 //to be continued
 func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	font, err := ttf.OpenFont("./resources/font/valuoldcaps.ttf", 20)
@@ -46,7 +56,7 @@ func (s *Scene) DrawTitle(errChannel chan error) {
 	errChannel <- err
 	defer t.Destroy()
 
-	rect := &sdl.Rect{X: 50, Y: 50, W: 500, H: 200}
+	rect := &sdl.Rect{X: 50, Y: 20, W: 500, H: 200}
 	errChannel <- s.renderer.Copy(t, nil, rect)
 	s.renderer.Present()
 }
