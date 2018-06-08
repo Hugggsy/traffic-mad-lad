@@ -14,9 +14,10 @@ type Scene struct {
 	font      *ttf.Font
 	renderer  *sdl.Renderer
 	bg        *sdl.Texture
-	yellowCar *sdl.Texture
-	greyCar   *sdl.Texture
-	motorbike *sdl.Texture
+	yellowCar *Vehicle
+	greyCar   *Vehicle
+	redCar    *Vehicle
+	motorbike *Vehicle
 }
 
 type Vehicle struct {
@@ -24,9 +25,10 @@ type Vehicle struct {
 	speedMultiplier int32
 }
 
-func newVehicle(filepath string, speedMultiplier int32, r *sdl.Renderer, errChannel chan error) Vehicle {
-	texture, err := img.LoadTexture(r, "resources/img/yellowcar.png")
+func newVehicle(filepath string, speedMultiplier float32, r *sdl.Renderer, errChannel chan error) Vehicle {
+	texture, err := img.LoadTexture(r, filepath)
 	errChannel <- err
+	return Vehicle{texture: texture}
 }
 
 //to be continued
@@ -34,14 +36,12 @@ func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	font, err := ttf.OpenFont("./resources/font/valuoldcaps.ttf", 20)
 	errChannel <- err
 	bg, err := img.LoadTexture(r, "resources/img/road.png")
-	errChannel <- err
-	yellowCar, err := img.LoadTexture(r, "resources/img/yellowcar.png")
-	errChannel <- err
-	greyCar, err := img.LoadTexture(r, "resources/img/greycar.png")
-	errChannel <- err
-	motorbike, err := img.LoadTexture(r, "resources/img/motorbike.png")
-	errChannel <- err
-	return Scene{renderer: r, font: font, bg: bg, yellowCar: yellowCar, greyCar: greyCar, motorbike: motorbike}
+
+	yellowCar := newVehicle("resources/img/yellowcar.png", 0.5, r, errChannel)
+	redCar := newVehicle("resources/img/redcar.jpg", 1, r, errChannel)
+	greyCar := newVehicle("resources/img/greycar.png", 1.5, r, errChannel)
+	motorbike := newVehicle("resources/img/motorbike.png", 1, r, errChannel)
+	return Scene{renderer: r, font: font, bg: bg, yellowCar: &yellowCar, redCar: &redCar, greyCar: &greyCar, motorbike: &motorbike}
 }
 
 func (s *Scene) DrawTitle(errChannel chan error) {
@@ -67,10 +67,10 @@ func (s *Scene) Paint(errChannel chan error) {
 	s.renderer.Clear()
 	errChannel <- s.renderer.Copy(s.bg, nil, nil)
 	carRect := &sdl.Rect{X: 300, Y: 200 + s.time, W: 120, H: 200}
-	errChannel <- s.renderer.Copy(s.greyCar, nil, carRect)
+	errChannel <- s.renderer.Copy(s.greyCar.texture, nil, carRect)
 	carRect2 := &sdl.Rect{X: 450, Y: 0 + 2*s.time, W: 100, H: 200}
-	errChannel <- s.renderer.Copy(s.yellowCar, nil, carRect2)
+	errChannel <- s.renderer.Copy(s.yellowCar.texture, nil, carRect2)
 	bikeRect := &sdl.Rect{X: 300, Y: 800 - 2*s.time, W: 70, H: 170}
-	errChannel <- s.renderer.Copy(s.motorbike, nil, bikeRect)
+	errChannel <- s.renderer.Copy(s.motorbike.texture, nil, bikeRect)
 	s.renderer.Present()
 }
