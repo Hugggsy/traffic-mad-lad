@@ -41,7 +41,7 @@ func becomeMadLad(wg *sync.WaitGroup, errChannel chan error) {
 
 	scene := painter.NewScene(renderer, errChannel)
 	scene.DrawTitle(errChannel)
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 
 	go func() {
 		for {
