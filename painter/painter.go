@@ -19,6 +19,7 @@ type Scene struct {
 	motorbike *Vehicle
 }
 
+//NewScene : Loads all textures and fonts once
 func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	bg, err := img.LoadTexture(r, "resources/img/road.png")
 	errChannel <- err
@@ -30,6 +31,7 @@ func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	return Scene{renderer: r, bg: bg, yellowCar: &yellowCar, redCar: &redCar, greyCar: &greyCar, motorbike: &motorbike}
 }
 
+//DrawTitle : prints ele;ents of texts on title screen
 func (s *Scene) DrawTitle(errChannel chan error) {
 	s.renderer.Clear()
 
@@ -48,7 +50,8 @@ func (s *Scene) DrawTitle(errChannel chan error) {
 	s.renderer.Present()
 }
 
-func (s *Scene) DrawGameOver(errChannel chan error) {
+//drawGameOver : Draw game over screen when called
+func (s *Scene) drawGameOver(errChannel chan error) {
 	s.renderer.Clear()
 
 	title := createTextTexture("GAME OVER", s.renderer, errChannel)
@@ -60,7 +63,7 @@ func (s *Scene) DrawGameOver(errChannel chan error) {
 	s.renderer.Present()
 }
 
-func (s *Scene) Paint(errChannel chan error) {
+func (s *Scene) paint(errChannel chan error) {
 	s.time++
 	s.renderer.Clear()
 	errChannel <- s.renderer.Copy(s.bg, nil, nil)
@@ -103,6 +106,7 @@ func (s *Scene) handleKeyPress(k *sdl.KeyboardEvent) {
 	}
 }
 
+//Run : launches game, dispatches events and actions to other actrors
 func (s *Scene) Run(events <-chan sdl.Event, errChannel chan error) {
 	ticker := time.Tick(10 * time.Millisecond)
 	gameover := false
@@ -113,10 +117,10 @@ func (s *Scene) Run(events <-chan sdl.Event, errChannel chan error) {
 				s.handleEvent(e, errChannel)
 			case <-ticker:
 				if !gameover {
-					s.Paint(errChannel)
+					s.paint(errChannel)
 					gameover = s.motorbike.checkOutOfBounds() || s.motorbike.checkIntersect(s.yellowCar, s.redCar, s.greyCar)
 				} else {
-					s.DrawGameOver(errChannel)
+					s.drawGameOver(errChannel)
 					time.Sleep(2 * time.Second)
 					s.reset(errChannel)
 					gameover = false

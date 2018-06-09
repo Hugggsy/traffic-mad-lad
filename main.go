@@ -15,7 +15,7 @@ func main() {
 	events := make(chan sdl.Event)
 	go handleErrors(errChannel)
 	go becomeMadLad(events, errChannel)
-
+	//event handler has to be locked to main thread by the library's requirement
 	runtime.LockOSThread()
 	for {
 		events <- sdl.WaitEvent()
@@ -31,6 +31,7 @@ func handleErrors(errChannel chan error) {
 	}
 }
 
+//Launches actual game
 func becomeMadLad(events chan sdl.Event, errChannel chan error) {
 	errChannel <- sdl.Init(sdl.INIT_EVERYTHING)
 
@@ -40,9 +41,10 @@ func becomeMadLad(events chan sdl.Event, errChannel chan error) {
 	errChannel <- err
 
 	scene := painter.NewScene(renderer, errChannel)
+	//Title screen
 	scene.DrawTitle(errChannel)
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
+	//Runs game
 	go scene.Run(events, errChannel)
-
 }

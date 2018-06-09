@@ -45,6 +45,7 @@ func newVehicle(name string, filepath string, r *sdl.Renderer, errChannel chan e
 	}
 	return Vehicle{texture: texture, X: X, Y: Y, W: W, H: H, YSpeed: YSpeed, name: name}
 }
+
 func (v *Vehicle) setPosition(X, Y int32) {
 	v.X = X
 	v.Y = Y
