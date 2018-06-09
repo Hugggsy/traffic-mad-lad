@@ -19,7 +19,6 @@ type Scene struct {
 	motorbike *Vehicle
 }
 
-//to be continued
 func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	bg, err := img.LoadTexture(r, "resources/img/road.png")
 	errChannel <- err
@@ -66,16 +65,17 @@ func (s *Scene) Paint(errChannel chan error) {
 	s.renderer.Clear()
 	errChannel <- s.renderer.Copy(s.bg, nil, nil)
 	updateVehiclePositions(s.yellowCar, s.redCar, s.greyCar, s.motorbike)
-	s.yellowCar.copyInRenderer(s.renderer, errChannel)
-	s.redCar.copyInRenderer(s.renderer, errChannel)
-	s.greyCar.copyInRenderer(s.renderer, errChannel)
-	s.motorbike.copyInRenderer(s.renderer, errChannel)
+	copyInRenderer(s.renderer, errChannel, s.yellowCar, s.redCar, s.greyCar, s.motorbike)
 
 	s.renderer.Present()
 }
 
 func (s *Scene) reset(errChannel chan error) {
+	s.time = 0
 	s.motorbike.setPosition(270, 800)
+	s.yellowCar.setPosition(450, -300)
+	s.redCar.setPosition(250, -300)
+	s.greyCar.setPosition(50, -300)
 }
 
 func (s *Scene) handleEvent(event sdl.Event, errChannel chan error) {
@@ -84,8 +84,6 @@ func (s *Scene) handleEvent(event sdl.Event, errChannel chan error) {
 		errChannel <- fmt.Errorf("User closed window")
 	case *sdl.KeyboardEvent:
 		s.handleKeyPress(e)
-	default:
-
 	}
 }
 
@@ -116,7 +114,7 @@ func (s *Scene) Run(events <-chan sdl.Event, errChannel chan error) {
 			case <-ticker:
 				if !gameover {
 					s.Paint(errChannel)
-					gameover = s.motorbike.checkOutOfBounds()
+					gameover = s.motorbike.checkOutOfBounds() || s.motorbike.checkIntersect(s.yellowCar, s.redCar, s.greyCar)
 				} else {
 					s.DrawGameOver(errChannel)
 					time.Sleep(2 * time.Second)
