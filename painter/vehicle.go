@@ -76,7 +76,15 @@ func updateVehiclePositions(vehicles ...*Vehicle) {
 		v.Y = v.Y + v.YSpeed
 	}
 }
+
 func (v *Vehicle) copyInRenderer(r *sdl.Renderer, errChannel chan error) {
 	vehicleRect := &sdl.Rect{X: v.X, Y: v.Y, W: v.W, H: v.H}
 	errChannel <- r.Copy(v.texture, nil, vehicleRect)
+}
+
+func (v *Vehicle) checkOutOfBounds() bool {
+	if v.X < 0 || v.X > 600 || v.Y < 0 || v.Y > 1050 {
+		return true
+	}
+	return false
 }

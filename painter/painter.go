@@ -37,11 +37,26 @@ func (s *Scene) DrawTitle(errChannel chan error) {
 	title := createTextTexture("Traffic MAD lad", s.renderer, errChannel)
 	copyTextInRendered(title, 50, 100, 500, 150, s.renderer, errChannel)
 
+	tips := createTextTexture("Use the arrow keys to dodge incoming cars", s.renderer, errChannel)
+	copyTextInRendered(tips, 50, 300, 500, 60, s.renderer, errChannel)
+
 	subtitle := createTextTexture("Vivant... Je suis vivant!", s.renderer, errChannel)
-	copyTextInRendered(subtitle, 100, 400, 400, 60, s.renderer, errChannel)
+	copyTextInRendered(subtitle, 100, 600, 400, 60, s.renderer, errChannel)
 
 	subsubtitle := createTextTexture("(Joe Bar Team ref ;-D)", s.renderer, errChannel)
-	copyTextInRendered(subsubtitle, 150, 500, 300, 30, s.renderer, errChannel)
+	copyTextInRendered(subsubtitle, 150, 700, 300, 30, s.renderer, errChannel)
+
+	s.renderer.Present()
+}
+
+func (s *Scene) DrawGameOver(errChannel chan error) {
+	s.renderer.Clear()
+
+	title := createTextTexture("GAME OVER", s.renderer, errChannel)
+	copyTextInRendered(title, 50, 300, 500, 150, s.renderer, errChannel)
+
+	subtitle := createTextTexture(fmt.Sprintf("YOUR GAME LASTED %ds", s.time/100), s.renderer, errChannel)
+	copyTextInRendered(subtitle, 50, 500, 500, 60, s.renderer, errChannel)
 
 	s.renderer.Present()
 }
@@ -57,6 +72,10 @@ func (s *Scene) Paint(errChannel chan error) {
 	s.motorbike.copyInRenderer(s.renderer, errChannel)
 
 	s.renderer.Present()
+}
+
+func (s *Scene) reset(errChannel chan error) {
+	s.motorbike.setPosition(270, 800)
 }
 
 func (s *Scene) handleEvent(event sdl.Event, errChannel chan error) {
@@ -88,13 +107,22 @@ func (s *Scene) handleKeyPress(k *sdl.KeyboardEvent) {
 
 func (s *Scene) Run(events <-chan sdl.Event, errChannel chan error) {
 	ticker := time.Tick(10 * time.Millisecond)
+	gameover := false
 	go func() {
 		for {
 			select {
 			case e := <-events:
 				s.handleEvent(e, errChannel)
 			case <-ticker:
-				s.Paint(errChannel)
+				if !gameover {
+					s.Paint(errChannel)
+					gameover = s.motorbike.checkOutOfBounds()
+				} else {
+					s.DrawGameOver(errChannel)
+					time.Sleep(2 * time.Second)
+					s.reset(errChannel)
+					gameover = false
+				}
 			}
 		}
 	}()

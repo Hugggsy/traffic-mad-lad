@@ -33,18 +33,16 @@ func handleErrors(errChannel chan error) {
 
 func becomeMadLad(events chan sdl.Event, errChannel chan error) {
 	errChannel <- sdl.Init(sdl.INIT_EVERYTHING)
-	//defer sdl.Quit()
 
 	errChannel <- ttf.Init()
-	//defer ttf.Quit()
 
 	_, renderer, err := sdl.CreateWindowAndRenderer(600, 1000, sdl.WINDOW_SHOWN)
 	errChannel <- err
-	//defer window.Destroy()
 
 	scene := painter.NewScene(renderer, errChannel)
 	scene.DrawTitle(errChannel)
-	time.Sleep(1 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	go scene.Run(events, errChannel)
+
 }
