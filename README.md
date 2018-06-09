@@ -14,5 +14,5 @@ go run main.go
 ## Extras
 ![Screenshot](/resources/screenshots/title_screen.png)
 ![Screenshot](/resources/screenshots/ingame.png)
-![Screenshot](/resources/screenshots/titl_screen.png)
+![Screenshot](/resources/screenshots/gameover.png)
 I definitely recommend reading Joe Bar Team comic books for all french speakers out there :D
