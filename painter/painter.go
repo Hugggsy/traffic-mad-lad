@@ -1,6 +1,9 @@
 package painter
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/veandco/go-sdl2/img"
 	"github.com/veandco/go-sdl2/sdl"
 )
@@ -20,10 +23,11 @@ type Scene struct {
 func NewScene(r *sdl.Renderer, errChannel chan error) Scene {
 	bg, err := img.LoadTexture(r, "resources/img/road.png")
 	errChannel <- err
-	yellowCar := newVehicle("yellowCar", "resources/img/yellowcar.png", 0.5, r, errChannel)
-	redCar := newVehicle("redCar", "resources/img/redcar.jpg", 1, r, errChannel)
-	greyCar := newVehicle("greyCar", "resources/img/greycar.png", 1.5, r, errChannel)
-	motorbike := newVehicle("motorbike", "resources/img/motorbike.png", 1, r, errChannel)
+	yellowCar := newVehicle("yellowCar", "resources/img/yellowcar.png", r, errChannel)
+	redCar := newVehicle("redCar", "resources/img/redcar.jpg", r, errChannel)
+	greyCar := newVehicle("greyCar", "resources/img/greycar.png", r, errChannel)
+	motorbike := newVehicle("motorbike", "resources/img/motorbike.png", r, errChannel)
+	motorbike.setPosition(270, 800)
 	return Scene{renderer: r, bg: bg, yellowCar: &yellowCar, redCar: &redCar, greyCar: &greyCar, motorbike: &motorbike}
 }
 
@@ -31,13 +35,13 @@ func (s *Scene) DrawTitle(errChannel chan error) {
 	s.renderer.Clear()
 
 	title := createTextTexture("Traffic MAD lad", s.renderer, errChannel)
-	copyTextInRendered(title, 50, 50, 500, 200, s.renderer, errChannel)
+	copyTextInRendered(title, 50, 100, 500, 150, s.renderer, errChannel)
 
 	subtitle := createTextTexture("Vivant... Je suis vivant!", s.renderer, errChannel)
-	copyTextInRendered(subtitle, 100, 300, 400, 75, s.renderer, errChannel)
+	copyTextInRendered(subtitle, 100, 400, 400, 60, s.renderer, errChannel)
 
 	subsubtitle := createTextTexture("(Joe Bar Team ref ;-D)", s.renderer, errChannel)
-	copyTextInRendered(subsubtitle, 150, 450, 300, 50, s.renderer, errChannel)
+	copyTextInRendered(subsubtitle, 150, 500, 300, 30, s.renderer, errChannel)
 
 	s.renderer.Present()
 }
@@ -46,10 +50,52 @@ func (s *Scene) Paint(errChannel chan error) {
 	s.time++
 	s.renderer.Clear()
 	errChannel <- s.renderer.Copy(s.bg, nil, nil)
+	updateVehiclePositions(s.yellowCar, s.redCar, s.greyCar, s.motorbike)
 	s.yellowCar.copyInRenderer(s.renderer, errChannel)
 	s.redCar.copyInRenderer(s.renderer, errChannel)
 	s.greyCar.copyInRenderer(s.renderer, errChannel)
 	s.motorbike.copyInRenderer(s.renderer, errChannel)
 
 	s.renderer.Present()
+}
+
+func (s *Scene) handleEvent(event sdl.Event, errChannel chan error) {
+	switch e := event.(type) {
+	case *sdl.QuitEvent:
+		errChannel <- fmt.Errorf("User closed window")
+	case *sdl.KeyboardEvent:
+		s.handleKeyPress(e)
+	default:
+
+	}
+}
+
+func (s *Scene) handleKeyPress(k *sdl.KeyboardEvent) {
+	pressed := (k.Type == 768)
+	switch k.Keysym.Scancode {
+	case 79:
+		s.motorbike.modifySpeedValue(pressed, "right")
+	case 80:
+		s.motorbike.modifySpeedValue(pressed, "left")
+	case 81:
+		s.motorbike.modifySpeedValue(pressed, "down")
+	case 82:
+		s.motorbike.modifySpeedValue(pressed, "up")
+	default:
+		fmt.Println(k.Keysym.Scancode)
+	}
+}
+
+func (s *Scene) Run(events <-chan sdl.Event, errChannel chan error) {
+	ticker := time.Tick(10 * time.Millisecond)
+	go func() {
+		for {
+			select {
+			case e := <-events:
+				s.handleEvent(e, errChannel)
+			case <-ticker:
+				s.Paint(errChannel)
+			}
+		}
+	}()
 }

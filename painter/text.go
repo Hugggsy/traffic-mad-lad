@@ -8,7 +8,7 @@ import (
 func createTextTexture(s string, r *sdl.Renderer, errChannel chan error) *sdl.Texture {
 	font, err := ttf.OpenFont("./resources/font/valuoldcaps.ttf", 20)
 	errChannel <- err
-	textColor := sdl.Color{R: 255, G: 0, B: 100, A: 255}
+	textColor := sdl.Color{R: 0, G: 150, B: 50, A: 255}
 	text, err := font.RenderUTF8Solid(s, textColor)
 	errChannel <- err
 	defer text.Free()

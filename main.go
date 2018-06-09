@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"sync"
+	"runtime"
 	"time"
 
 	"github.com/Hugggsy/traffic-mad-lad/painter"
@@ -12,11 +12,14 @@ import (
 
 func main() {
 	errChannel := make(chan error)
+	events := make(chan sdl.Event)
 	go handleErrors(errChannel)
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go becomeMadLad(&wg, errChannel)
-	wg.Wait()
+	go becomeMadLad(events, errChannel)
+
+	runtime.LockOSThread()
+	for {
+		events <- sdl.WaitEvent()
+	}
 }
 
 func handleErrors(errChannel chan error) {
@@ -28,7 +31,7 @@ func handleErrors(errChannel chan error) {
 	}
 }
 
-func becomeMadLad(wg *sync.WaitGroup, errChannel chan error) {
+func becomeMadLad(events chan sdl.Event, errChannel chan error) {
 	errChannel <- sdl.Init(sdl.INIT_EVERYTHING)
 	//defer sdl.Quit()
 
@@ -41,13 +44,7 @@ func becomeMadLad(wg *sync.WaitGroup, errChannel chan error) {
 
 	scene := painter.NewScene(renderer, errChannel)
 	scene.DrawTitle(errChannel)
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 
-	go func() {
-		for {
-			scene.Paint(errChannel)
-			time.Sleep(10 * time.Millisecond)
-		}
-	}()
-
+	go scene.Run(events, errChannel)
 }
